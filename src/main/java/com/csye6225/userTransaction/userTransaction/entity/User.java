@@ -16,7 +16,7 @@ import javax.persistence.OneToMany;
 public class User {
 	
 	@Id
-	@GeneratedValue(strategy=GenerationType.AUTO)
+	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	private int id;
 	private String email;
 	private String password;
@@ -34,13 +34,14 @@ public class User {
 		this.email = email;
 		this.password = password;
 	}
+	
+	public User(User user) {
+		this.email = user.getEmail();
+		this.password = user.getPassword();
+	}
 
 	public int getId() {
 		return id;
-	}
-
-	public void setId(int id) {
-		this.id = id;
 	}
 
 	public String getEmail() {

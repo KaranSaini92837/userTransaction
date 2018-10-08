@@ -61,8 +61,8 @@ public class TransactionController {
 	}
 
 	@PostMapping("/user/{id}/transaction")
-	public void addTransaction(@PathVariable int id, @Valid @RequestBody Transaction trans, BindingResult result,
-			HttpServletRequest request, HttpServletResponse response) throws IOException {
+	public void addTransaction(@PathVariable int id, @Valid @RequestBody Transaction trans, BindingResult result
+			,HttpServletRequest request, HttpServletResponse response) throws IOException {
 
 		if (userRepo.existsById(id)) {
 			User user = userRepo.findById(id).get();
@@ -93,7 +93,7 @@ public class TransactionController {
 
 	@PutMapping("/user/{id}/transaction/{transId}")
 	public void updateTransaction(@PathVariable int id, @PathVariable String transId,
-			@Valid @RequestBody Transaction trans, BindingResult result, HttpServletRequest request,
+			@Valid @RequestBody Transaction trans,BindingResult result ,HttpServletRequest request,
 			HttpServletResponse response) throws JsonProcessingException, IOException {
 
 		if (userRepo.existsById(id)) {
@@ -111,7 +111,7 @@ public class TransactionController {
 						t.setAmount(trans.getAmount());
 						t.setDate(trans.getDate());
 						t.setMerchant(trans.getMerchant());
-						t.setType(trans.getType());
+						t.setCategory(trans.getCategory());
 						transRepo.save(t);
 					} else {
 						response.setStatus(HttpServletResponse.SC_BAD_REQUEST);

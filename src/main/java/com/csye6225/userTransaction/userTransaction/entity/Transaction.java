@@ -1,5 +1,6 @@
 package com.csye6225.userTransaction.userTransaction.entity;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -10,9 +11,14 @@ import org.hibernate.annotations.GenericGenerator;
 @Entity
 public class Transaction {
 
-	@Id
+//	@Id
+//	@GeneratedValue(generator = "uuid")
+//	@GenericGenerator(name = "uuid", strategy = "uuid")
+	
 	@GeneratedValue(generator = "uuid")
-	@GenericGenerator(name = "uuid", strategy = "uuid")
+    @GenericGenerator(name = "uuid", strategy = "uuid")
+    @Column(columnDefinition = "CHAR(32)")
+    @Id
 	private String id;
 	
 	@NotNull
@@ -24,19 +30,19 @@ public class Transaction {
 	@NotNull
 	private String date;
 	@NotNull
-	private String type;
-
+	private String category;
+	
 	public Transaction() {
 		super();
 	}
 
-	public Transaction(String description, String merchant, String amount, String date, String type) {
+	public Transaction(String description, String merchant, String amount, String date, String category) {
 		super();
 		this.description = description;
 		this.merchant = merchant;
 		this.amount = amount;
 		this.date = date;
-		this.type = type;
+		this.category = category;
 	}
 
 	public String getId() {
@@ -79,18 +85,18 @@ public class Transaction {
 		this.date = date;
 	}
 
-	public String getType() {
-		return type;
+	public String getCategory() {
+		return category;
 	}
 
-	public void setType(String type) {
-		this.type = type;
+	public void setCategory(String category) {
+		this.category = category;
 	}
 
 	@Override
 	public String toString() {
 		return "Transaction [id=" + id + ", description=" + description + ", merchant=" + merchant + ", amount="
-				+ amount + ", date=" + date + ", type=" + type + "]";
+				+ amount + ", date=" + date + ", type=" + category + "]";
 	}
 
 }
