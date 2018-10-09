@@ -23,6 +23,7 @@ import com.csye6225.userTransaction.userTransaction.entity.Transaction;
 import com.csye6225.userTransaction.userTransaction.entity.User;
 import com.csye6225.userTransaction.userTransaction.repository.TransactionRepository;
 import com.csye6225.userTransaction.userTransaction.repository.UserRepository;
+import com.csye6225.userTransaction.userTransaction.service.TransactionService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -34,46 +35,55 @@ public class TransactionController {
 
 	@Autowired
 	private TransactionRepository transRepo;
+	
+	@Autowired
+	private TransactionService transactionService;
 
 	@Autowired
 	private Authorization auth;
 
 	private ObjectMapper mapper = new ObjectMapper();
 
-	@GetMapping("/user/{id}/transaction")
-	public List<Transaction> getAllTransaction(@PathVariable int id, HttpServletRequest request,
-			HttpServletResponse response) {
+	@GetMapping("/transaction")
+	public List<Transaction> getAllTransaction(HttpServletRequest request, HttpServletResponse response)
+			throws JsonProcessingException, IOException {
 
-		if (userRepo.existsById(id)) {
-			User user = userRepo.findById(id).get();
-			String[] values = auth.values(request);
-			if (user.getEmail() == values[0] && BCrypt.checkpw(values[1], user.getPassword())) {
+		// User user = userRepo.findById(id).get();
+		String[] values = auth.values(request);
+		if (userRepo.findAll().stream().anyMatch(t -> t.getEmail().equals(values[0]))) {
+			User user = userRepo.findAll().stream().filter(t -> t.getEmail().equals(values[0])).findFirst().get();
+			if (BCrypt.checkpw(values[1], user.getPassword())) {
 				return user.getTransactions();
 			} else {
 				response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 				return null;
 			}
-		} else {
+		} else
+
+		{
 			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+			response.getWriter().println(mapper.writeValueAsString("No such user!!!"));
 			return null;
 		}
 
 	}
 
-	@PostMapping("/user/{id}/transaction")
-	public void addTransaction(@PathVariable int id, @Valid @RequestBody Transaction trans, BindingResult result
-			,HttpServletRequest request, HttpServletResponse response) throws IOException {
+	@PostMapping("/transaction")
+	public void addTransaction(@Valid @RequestBody Transaction trans, BindingResult result, HttpServletRequest request,
+			HttpServletResponse response) throws IOException {
 
-		if (userRepo.existsById(id)) {
-			User user = userRepo.findById(id).get();
-			if (result.hasErrors()) {
-				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-				response.getWriter().println(mapper.writeValueAsString("Missing feild in transaction!!!"));
-			} else {
+		// if (userRepo.existsById(id)) {
+		// User user = userRepo.findById(id).get();
+		if (result.hasErrors()) {
+			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+			response.getWriter().println(mapper.writeValueAsString("Missing feild in transaction!!!"));
+		} else {
 
-				String[] values = auth.values(request);
-				if (user.getEmail().equals(values[0]) && BCrypt.checkpw(values[1], user.getPassword())) {
-					userRepo.findById(id).get().addTransaction(trans);
+			String[] values = auth.values(request);
+			if (userRepo.findAll().stream().anyMatch(t -> t.getEmail().equals(values[0]))) {
+				User user = userRepo.findAll().stream().filter(t -> t.getEmail().equals(values[0])).findFirst().get();
+				if (BCrypt.checkpw(values[1], user.getPassword())) {
+					user.addTransaction(trans);
 					userRepo.save(user);
 					response.setStatus(HttpServletResponse.SC_CREATED);
 					response.getWriter().println(mapper.writeValueAsString("Transaction Saved"));
@@ -84,25 +94,28 @@ public class TransactionController {
 				// response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 				// response.getWriter().println(mapper.writeValueAsString("No such user!!!"));
 				// }
+
+			} else {
+				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+				response.getWriter().println(mapper.writeValueAsString("No such user!!!"));
 			}
-		} else {
-			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-			response.getWriter().println(mapper.writeValueAsString("No such user!!!"));
 		}
 	}
 
-	@PutMapping("/user/{id}/transaction/{transId}")
-	public void updateTransaction(@PathVariable int id, @PathVariable String transId,
-			@Valid @RequestBody Transaction trans,BindingResult result ,HttpServletRequest request,
+	@PutMapping("/transaction/{transId}")
+	public void updateTransaction(@PathVariable String transId,
+			@Valid @RequestBody Transaction trans, BindingResult result, HttpServletRequest request,
 			HttpServletResponse response) throws JsonProcessingException, IOException {
 
-		if (userRepo.existsById(id)) {
-			User user = userRepo.findById(id).get();
-			if (result.hasErrors()) {
-				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-				response.getWriter().println(mapper.writeValueAsString("Missing feild in transaction!!!"));
-			} else {
-				String[] values = auth.values(request);
+		// if (userRepo.existsById(id)) {
+		// User user = userRepo.findById(id).get();
+		if (result.hasErrors()) {
+			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+			response.getWriter().println(mapper.writeValueAsString("Missing feild in transaction!!!"));
+		} else {
+			String[] values = auth.values(request);
+			if (userRepo.findAll().stream().anyMatch(t -> t.getEmail().equals(values[0]))) {
+				User user = userRepo.findAll().stream().filter(t -> t.getEmail().equals(values[0])).findFirst().get();
 				if (user.getEmail().equals(values[0]) && BCrypt.checkpw(values[1], user.getPassword())) {
 					List<Transaction> transactions = user.getTransactions();
 					if (transactions.stream().anyMatch(t -> t.getId().equals(transId))) {
@@ -119,23 +132,35 @@ public class TransactionController {
 				} else {
 					response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 				}
+			} else {
+				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+				response.getWriter().println(mapper.writeValueAsString("No such user!!!"));
 			}
-		} else {
-			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-			response.getWriter().println(mapper.writeValueAsString("No such user!!!"));
 		}
 	}
 
-	@DeleteMapping("/user/{id}/transaction/{transId}")
-	public void deleteTransaction(@PathVariable int id, @PathVariable String transId, HttpServletRequest request,
+	@DeleteMapping("/transaction/{transId}")
+	public void deleteTransaction(@PathVariable String transId, HttpServletRequest request,
 			HttpServletResponse response) throws JsonProcessingException, IOException {
-		if (userRepo.existsById(id)) {
-			User user = userRepo.findById(id).get();
-			String[] values = auth.values(request);
-			if (user.getEmail().equals(values[0]) && BCrypt.checkpw(values[1], user.getPassword())) {
+		// if (userRepo.existsById(id)) {
+		// User user = userRepo.findById(id).get();
+		String[] values = auth.values(request);
+		if (userRepo.findAll().stream().anyMatch(t -> t.getEmail().equals(values[0]))) {
+			User user = userRepo.findAll().stream().filter(t -> t.getEmail().equals(values[0])).findFirst().get();
+
+			if (BCrypt.checkpw(values[1], user.getPassword())) {
 				List<Transaction> transactions = user.getTransactions();
 				if (transactions.stream().anyMatch(t -> t.getId().equals(transId))) {
-					transRepo.deleteById(transId);
+					System.out.println(transRepo.findById(transId).get());
+					//transRepo.deleteById(transId);
+//					transRepo.delete(transRepo.findById(transId).get());
+					transactions.remove(transactions.stream()
+							.filter(t -> t.getId().equals(transId)).findFirst().get());
+					userRepo.save(user);
+					//transactionService.deleteTransaction(transId);
+					transRepo.delete(transRepo.findById(transId).get());
+					//transRepo.
+					response.getWriter().println(mapper.writeValueAsString("Transaction Deleted!!!"));
 				} else {
 					response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 					response.getWriter().println(mapper.writeValueAsString("No such transaction!!!"));
@@ -145,8 +170,11 @@ public class TransactionController {
 			}
 		} else {
 			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-			response.getWriter().println(mapper.writeValueAsString("No such user!!!"));
+			response.getWriter().println(mapper.writeValueAsString("No such user!!!"));	
 		}
 	}
 
 }
+
+// User user =userRepo.findAll().stream().filter(t ->
+// t.getEmail().equals(values[0])).findFirst().get();
