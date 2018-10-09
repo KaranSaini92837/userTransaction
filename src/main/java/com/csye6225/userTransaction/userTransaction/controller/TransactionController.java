@@ -126,6 +126,7 @@ public class TransactionController {
 						t.setMerchant(trans.getMerchant());
 						t.setCategory(trans.getCategory());
 						transRepo.save(t);
+						response.setStatus(HttpServletResponse.SC_CREATED);
 					} else {
 						response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 					}
@@ -162,7 +163,7 @@ public class TransactionController {
 					//transRepo.
 					response.getWriter().println(mapper.writeValueAsString("Transaction Deleted!!!"));
 				} else {
-					response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+					response.setStatus(HttpServletResponse.SC_NO_CONTENT);
 					response.getWriter().println(mapper.writeValueAsString("No such transaction!!!"));
 				}
 			} else {
