@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.csye6225.userTransaction.userTransaction.Authorization.Authorization;
+import com.csye6225.userTransaction.userTransaction.entity.Attachment;
 import com.csye6225.userTransaction.userTransaction.entity.Transaction;
 import com.csye6225.userTransaction.userTransaction.entity.User;
 import com.csye6225.userTransaction.userTransaction.repository.TransactionRepository;
@@ -35,7 +36,7 @@ public class TransactionController {
 
 	@Autowired
 	private TransactionRepository transRepo;
-	
+
 	@Autowired
 	private TransactionService transactionService;
 
@@ -103,9 +104,9 @@ public class TransactionController {
 	}
 
 	@PutMapping("/transaction/{transId}")
-	public void updateTransaction(@PathVariable String transId,
-			@Valid @RequestBody Transaction trans, BindingResult result, HttpServletRequest request,
-			HttpServletResponse response) throws JsonProcessingException, IOException {
+	public void updateTransaction(@PathVariable String transId, @Valid @RequestBody Transaction trans,
+			BindingResult result, HttpServletRequest request, HttpServletResponse response)
+			throws JsonProcessingException, IOException {
 
 		// if (userRepo.existsById(id)) {
 		// User user = userRepo.findById(id).get();
@@ -153,14 +154,13 @@ public class TransactionController {
 				List<Transaction> transactions = user.getTransactions();
 				if (transactions.stream().anyMatch(t -> t.getId().equals(transId))) {
 					System.out.println(transRepo.findById(transId).get());
-					//transRepo.deleteById(transId);
-//					transRepo.delete(transRepo.findById(transId).get());
-					transactions.remove(transactions.stream()
-							.filter(t -> t.getId().equals(transId)).findFirst().get());
+					// transRepo.deleteById(transId);
+					// transRepo.delete(transRepo.findById(transId).get());
+					transactions.remove(transactions.stream().filter(t -> t.getId().equals(transId)).findFirst().get());
 					userRepo.save(user);
-					//transactionService.deleteTransaction(transId);
+					// transactionService.deleteTransaction(transId);
 					transRepo.delete(transRepo.findById(transId).get());
-					//transRepo.
+					// transRepo.
 					response.getWriter().println(mapper.writeValueAsString("Transaction Deleted!!!"));
 				} else {
 					response.setStatus(HttpServletResponse.SC_NO_CONTENT);
@@ -171,7 +171,61 @@ public class TransactionController {
 			}
 		} else {
 			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-			response.getWriter().println(mapper.writeValueAsString("No such user!!!"));	
+			response.getWriter().println(mapper.writeValueAsString("No such user!!!"));
+		}
+	}
+
+	@GetMapping("/transaction/{transId}/attachments")
+	public Attachment getAttachment(@PathVariable String transId, HttpServletRequest request,
+			HttpServletResponse response) {
+		String[] values = auth.values(request);
+		if (userRepo.findAll().stream().anyMatch(t -> t.getEmail().equals(values[0]))) {
+			User user = userRepo.findAll().stream().filter(t -> t.getEmail().equals(values[0])).findFirst().get();
+			if (BCrypt.checkpw(values[1], user.getPassword())) {
+				List<Transaction> transactions = user.getTransactions();
+
+				if (transactions.stream().anyMatch(t -> t.getId().equals(transId))) {
+					return transactions.stream().filter(t -> t.getId().equals(transId)).findFirst().get()
+							.getAttachment();
+				} else {
+					return null;
+				}
+			}
+		}
+		return null;
+
+	}
+
+	@PostMapping("/transaction/{transId}/attachments")
+	public void addAttachment(@PathVariable String transId, @Valid @RequestBody Attachment attachment,
+			BindingResult result, HttpServletRequest request, HttpServletResponse response)
+			throws JsonProcessingException, IOException {
+		if (result.hasErrors()) {
+			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+			response.getWriter().println(mapper.writeValueAsString("Missing feild in attachment!!!"));
+		} else {
+			String[] values = auth.values(request);
+			if (userRepo.findAll().stream().anyMatch(t -> t.getEmail().equals(values[0]))) {
+				User user = userRepo.findAll().stream().filter(t -> t.getEmail().equals(values[0])).findFirst().get();
+				if (BCrypt.checkpw(values[1], user.getPassword())) {
+					List<Transaction> transactions = user.getTransactions();
+
+					if (transactions.stream().anyMatch(t -> t.getId().equals(transId))) {
+						transactions.stream().filter(t -> t.getId().equals(transId)).findFirst().get().setAttachment(attachment);
+						//transRepo.save(transactions.stream().filter(t -> t.getId().equals(transId)).findFirst().get());
+						userRepo.save(user);
+						response.setStatus(HttpServletResponse.SC_CREATED);
+					} else {
+						response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+						response.getWriter().println(mapper.writeValueAsString("No such transaction!!!"));
+					}
+				} else {
+					response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+				}
+			} else {
+				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+				response.getWriter().println(mapper.writeValueAsString("No such user!!!"));
+			}
 		}
 	}
 

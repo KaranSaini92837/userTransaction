@@ -1,9 +1,12 @@
 package com.csye6225.userTransaction.userTransaction.entity;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
 import javax.validation.constraints.NotNull;
 
 import org.hibernate.annotations.GenericGenerator;
@@ -31,6 +34,10 @@ public class Transaction {
 	private String date;
 	@NotNull
 	private String category;
+	
+	@OneToOne(cascade=CascadeType.ALL)
+	@JoinColumn(name="attachment_id")
+	private Attachment attachment;
 	
 	public Transaction() {
 		super();
@@ -91,6 +98,14 @@ public class Transaction {
 
 	public void setCategory(String category) {
 		this.category = category;
+	}
+
+	public Attachment getAttachment() {
+		return attachment;
+	}
+
+	public void setAttachment(Attachment attachment) {
+		this.attachment = attachment;
 	}
 
 	@Override
