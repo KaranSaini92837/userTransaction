@@ -1,0 +1,6 @@
+amazonProperties:
+  endpointUrl: https://s3.us-east-1.amazonaws.com
+  accessKey: AKIAJEPJB424LEOQVQTQ
+  secretKey: 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
+  region: us-east-1
+  bucketName: karan-app

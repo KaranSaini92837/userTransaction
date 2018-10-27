@@ -35,6 +35,7 @@ public class UserController {
 	public void showTime(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
 		ObjectMapper mapper = new ObjectMapper();
+		System.out.println(request.getRequestURL().toString());
 		
 
 		String[] values = auth.values(request);
