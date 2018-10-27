@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
@@ -29,19 +30,24 @@ public class AmazonClient {
 	private String endpointUrl;
 	@Value("${amazonProperties.bucketName}")
 	private String bucketName;
-	@Value("${amazonProperties.accessKey}")
-	private String accessKey;
-	@Value("${amazonProperties.secretKey}")
-	private String secretKey;
+//	@Value("${amazonProperties.accessKey}")
+//	private String accessKey;
+//	@Value("${amazonProperties.secretKey}")
+//	private String secretKey;
 	@Value("${amazonProperties.region}")
 	private String region;
 
 	@PostConstruct
 	private void initializeAmazon() {
-		AWSCredentials credentials = new BasicAWSCredentials(this.accessKey, this.secretKey);
+		
+		final ProfileCredentialsProvider credentialsProvider
+        = new ProfileCredentialsProvider(System.getenv("AWS_PROFILE"));
+		//AWSCredentials credentials = new BasicAWSCredentials(this.accessKey, this.secretKey);
 
-		this.s3client = AmazonS3ClientBuilder.standard().withCredentials(new AWSStaticCredentialsProvider(credentials))
-				.withRegion(region).build();
+//		this.s3client = AmazonS3ClientBuilder.standard().withCredentials(new AWSStaticCredentialsProvider(credentials))
+//				.withRegion(region).build();
+		
+		this.s3client = AmazonS3ClientBuilder.standard().withCredentials(credentialsProvider).build();
 	}
 
 	private File convertMultiPartToFile(MultipartFile file) throws IOException {
